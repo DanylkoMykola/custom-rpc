@@ -1,6 +1,6 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -32,17 +32,15 @@ public class RpcServer {
         public void run() {
             HelloRequest request = null;
             try {
-                ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
-                ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
-                request = (HelloRequest) input.readObject();
+                DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+                DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+                request = HelloRequest.readFrom(input);
                 String responseMessage = "Hello, " + request.getName();
                 HelloResponse response = new HelloResponse(responseMessage);
 
-                output.writeObject(response);
+                response.writeTo(output);
                 output.flush();
             } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
