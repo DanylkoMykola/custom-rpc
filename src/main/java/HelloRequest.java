@@ -1,3 +1,5 @@
+import reader.BinaryField;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,16 +12,23 @@ import java.nio.charset.StandardCharsets;
  * The main idea is not to use a Java serialization because it is not portable and can not be used outside Java ecosystem.
  */
 public class HelloRequest {
+
     private String name;
 
     public HelloRequest(String name) {
         this.name = name;
     }
 
+    public HelloRequest() {
+        // Default constructor for deserialization
+    }
+
+    @BinaryField(order = 1)
     public String getName() {
         return name;
     }
 
+    @BinaryField(order = 1)
     public void setName(String name) {
         this.name = name;
     }
@@ -30,6 +39,7 @@ public class HelloRequest {
      * @param out the DataOutputStream to write to
      * @throws IOException if an I/O error occurs
      */
+    @Deprecated
     public void writeTo(DataOutputStream out) throws IOException {
         byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
         out.writeInt(nameBytes.length);
@@ -43,6 +53,7 @@ public class HelloRequest {
      * @return a HelloRequest object
      * @throws IOException if an I/O error occurs
      */
+    @Deprecated
     public static HelloRequest readFrom(DataInputStream in) throws IOException {
         int readLength = in.readInt();
         byte[] namesBytes = new byte[readLength];

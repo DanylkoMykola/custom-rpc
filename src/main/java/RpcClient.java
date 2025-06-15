@@ -1,3 +1,6 @@
+import reader.GenericMessageReader;
+import reader.GenericMessageWriter;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -5,7 +8,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class RpcClient {
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) throws Exception {
         Socket socket = new Socket("localhost",50051);
         System.out.println("Reading from server...");
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
@@ -15,10 +18,15 @@ public class RpcClient {
         DataInputStream input = new DataInputStream(socket.getInputStream());
 
         HelloRequest request = new HelloRequest("Mykola");
-        request.writeTo(output);
+
+
+        GenericMessageWriter writer = new GenericMessageWriter();
+        writer.write(output, request);
+
         output.flush();
 
-        HelloResponse response = HelloResponse.readFrom(input);
+        GenericMessageReader reader = new GenericMessageReader();
+        HelloResponse response = reader.read(input, HelloResponse.class);
         System.out.println("Received response: " + response.getMessage());
 
         socket.close();

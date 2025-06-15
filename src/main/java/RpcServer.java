@@ -1,3 +1,6 @@
+import reader.GenericMessageReader;
+import reader.GenericMessageWriter;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -34,11 +37,15 @@ public class RpcServer {
             try {
                 DataInputStream input = new DataInputStream(clientSocket.getInputStream());
                 DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
-                request = HelloRequest.readFrom(input);
+
+                GenericMessageReader reader = new GenericMessageReader();
+                request = reader.read(input, HelloRequest.class);
+
                 String responseMessage = "Hello, " + request.getName();
                 HelloResponse response = new HelloResponse(responseMessage);
 
-                response.writeTo(output);
+                GenericMessageWriter writer = new GenericMessageWriter();
+                writer.write(output, response);
                 output.flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);
