@@ -1,0 +1,4 @@
+C:\Users\mdanylk\StudyProjects\spring_boot_microservices_new\custom-rpc\src\main\java\HelloRequest.java
+C:\Users\mdanylk\StudyProjects\spring_boot_microservices_new\custom-rpc\src\main\java\HelloResponse.java
+C:\Users\mdanylk\StudyProjects\spring_boot_microservices_new\custom-rpc\src\main\java\RpcClient.java
+C:\Users\mdanylk\StudyProjects\spring_boot_microservices_new\custom-rpc\src\main\java\RpcServer.java
