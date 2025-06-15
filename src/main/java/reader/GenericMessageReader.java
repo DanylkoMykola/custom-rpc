@@ -1,30 +1,22 @@
 package reader;
 
 import java.io.DataInputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Comparator;
 
-public class GenericMessageReader {
+public class GenericMessageReader extends GenericMessage{
     public <T> T read(DataInputStream input, Class<T> clazz) {
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
 
-            Method[] methods = clazz.getDeclaredMethods();
-            Arrays.sort(methods, Comparator.comparingInt(m -> {
-                Annotation annotation = m.getAnnotation(BinaryField.class);
-                if (annotation == null) {
-                    return Integer.MAX_VALUE; // If no BinaryField annotation, place at the end
-                }
-                return m.getAnnotation(BinaryField.class).order();
-            }));
+            Field[] fields = getSortedDeclaredFields(clazz);
 
-            for (Method method : methods) {
-                if (!isSetter(method)) continue;
+            for (Field field : fields) {
+                String setterName = getFieldSetter(field);
+                Method method = clazz.getMethod(setterName, field.getType());
                 Class<?> type = method.getParameterTypes()[0];
 
                 if (type == String.class) {
@@ -65,5 +57,11 @@ public class GenericMessageReader {
                 && method.getName().startsWith("set")
                 && Arrays.stream(method.getDeclaredAnnotations())
                 .anyMatch(annotation -> annotation.annotationType().equals(BinaryField.class));
+    }
+
+    private String getFieldSetter(Field field) {
+        String fieldName = field.getName();
+        return "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+
     }
 }

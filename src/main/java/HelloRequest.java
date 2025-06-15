@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class HelloRequest {
 
+    @BinaryField(order = 1)
     private String name;
 
     public HelloRequest(String name) {
@@ -23,12 +24,10 @@ public class HelloRequest {
         // Default constructor for deserialization
     }
 
-    @BinaryField(order = 1)
     public String getName() {
         return name;
     }
 
-    @BinaryField(order = 1)
     public void setName(String name) {
         this.name = name;
     }

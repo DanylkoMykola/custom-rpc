@@ -2,6 +2,7 @@ package reader;
 
 import java.io.DataOutputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
@@ -13,22 +14,16 @@ import java.util.Comparator;
  * using reflection to handle methods annotated with BinaryField.
  * It sorts the methods based on the order specified in the BinaryField annotation.
  */
-public class GenericMessageWriter {
+public class GenericMessageWriter extends GenericMessage {
     public <T> void write(DataOutputStream output, T obj) {
         try {
             Class<?> clazz = obj.getClass();
 
-            Method[] methods = clazz.getDeclaredMethods();
-            Arrays.sort(methods, Comparator.comparingInt(m -> {
-                Annotation annotation = m.getAnnotation(BinaryField.class);
-                if (annotation == null) {
-                    return Integer.MAX_VALUE; // If no BinaryField annotation, place at the end
-                }
-                return m.getAnnotation(BinaryField.class).order();
-            }));
+            Field[] fields = getSortedDeclaredFields(clazz);
 
-            for (Method method : methods) {
-                if (!isGetter(method)) continue;
+            for (Field field : fields) {
+                String getterName = getFieldGetter(field);
+                Method method = clazz.getMethod(getterName);
 
                 Object value = method.invoke(obj);
                 Class<?> type = method.getReturnType();
@@ -63,5 +58,11 @@ public class GenericMessageWriter {
                 && method.getName().startsWith("get")
                 && Arrays.stream(method.getDeclaredAnnotations())
                         .anyMatch(annotation -> annotation.annotationType().equals(BinaryField.class));
+    }
+
+    private String getFieldGetter(Field field) {
+        String fieldName = field.getName();
+        return "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+
     }
 }
