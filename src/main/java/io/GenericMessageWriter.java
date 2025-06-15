@@ -1,13 +1,14 @@
-package reader;
+package io;
+
+import io.codec.TypeCodec;
+import io.codec.TypeCodecRegistry;
 
 import java.io.DataOutputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
+
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * GenericMessageWriter is responsible for writing objects to a DataOutputStream
@@ -15,6 +16,13 @@ import java.util.Comparator;
  * It sorts the methods based on the order specified in the BinaryField annotation.
  */
 public class GenericMessageWriter extends GenericMessage {
+
+    private final TypeCodecRegistry codecRegistry;
+
+    public GenericMessageWriter(TypeCodecRegistry codecRegistry) {
+        this.codecRegistry = codecRegistry;
+    }
+
     public <T> void write(DataOutputStream output, T obj) {
         try {
             Class<?> clazz = obj.getClass();
@@ -28,24 +36,12 @@ public class GenericMessageWriter extends GenericMessage {
                 Object value = method.invoke(obj);
                 Class<?> type = method.getReturnType();
 
-                if (type == String.class) {
-                    byte[] bytes = ((String) value).getBytes(StandardCharsets.UTF_8);
-                    output.writeInt(bytes.length);
-                    output.write(bytes);
-                }
-                else if (type == Integer.class) {
-                    output.writeInt(((int) value));
-                }
-                else if (type == Long.class) {
-                    output.writeLong(((long) value));
-                }
-                else if (type == Double.class) {
-                    output.writeDouble(((double) value));
-                }
-                else if (type == Boolean.class) {
-                    output.writeBoolean(((boolean) value));
-                }
-                else {
+                TypeCodec<Object> codec = (TypeCodec<Object>) codecRegistry.get(type);
+
+                if (codec != null) {
+                    codec.write(output, value);
+                } else {
+                    // Fallback to recursively serializing this object
                     write(output, value);
                 }
             }

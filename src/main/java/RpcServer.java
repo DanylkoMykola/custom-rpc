@@ -1,5 +1,6 @@
-import reader.GenericMessageReader;
-import reader.GenericMessageWriter;
+import io.GenericMessageReader;
+import io.GenericMessageWriter;
+import io.codec.TypeCodecRegistry;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -26,6 +27,7 @@ public class RpcServer {
     }
     static class ClientHandler implements Runnable {
         private Socket clientSocket;
+        private static final TypeCodecRegistry codecRegistry = TypeCodecRegistry.getInstance();
 
         public ClientHandler(Socket clientSocket) {
             this.clientSocket = clientSocket;
@@ -38,13 +40,13 @@ public class RpcServer {
                 DataInputStream input = new DataInputStream(clientSocket.getInputStream());
                 DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
 
-                GenericMessageReader reader = new GenericMessageReader();
+                GenericMessageReader reader = new GenericMessageReader(codecRegistry);
                 request = reader.read(input, HelloRequest.class);
 
                 String responseMessage = "Hello, " + request.getName();
                 HelloResponse response = new HelloResponse(responseMessage);
 
-                GenericMessageWriter writer = new GenericMessageWriter();
+                GenericMessageWriter writer = new GenericMessageWriter(codecRegistry);
                 writer.write(output, response);
                 output.flush();
             } catch (IOException e) {

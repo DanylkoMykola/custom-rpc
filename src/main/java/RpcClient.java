@@ -1,14 +1,15 @@
-import reader.GenericMessageReader;
-import reader.GenericMessageWriter;
+import io.GenericMessageReader;
+import io.GenericMessageWriter;
+import io.codec.TypeCodecRegistry;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 
 import java.net.Socket;
 
 public class RpcClient {
     public static void main(String[] args) throws Exception {
+        TypeCodecRegistry codecRegistry = TypeCodecRegistry.getInstance();
         Socket socket = new Socket("localhost",50051);
         System.out.println("Reading from server...");
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
@@ -20,12 +21,12 @@ public class RpcClient {
         HelloRequest request = new HelloRequest("Mykola");
 
 
-        GenericMessageWriter writer = new GenericMessageWriter();
+        GenericMessageWriter writer = new GenericMessageWriter(codecRegistry);
         writer.write(output, request);
 
         output.flush();
 
-        GenericMessageReader reader = new GenericMessageReader();
+        GenericMessageReader reader = new GenericMessageReader(codecRegistry);
         HelloResponse response = reader.read(input, HelloResponse.class);
         System.out.println("Received response: " + response.getMessage());
 

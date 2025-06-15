@@ -1,9 +1,8 @@
-import reader.BinaryField;
+import io.BinaryField;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 /**

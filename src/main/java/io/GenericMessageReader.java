@@ -1,13 +1,27 @@
-package reader;
+package io;
+
+import io.codec.TypeCodec;
+import io.codec.TypeCodecRegistry;
 
 import java.io.DataInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+/**
+ * GenericMessageReader is responsible for reading objects from a DataInputStream
+ * using reflection to handle methods annotated with BinaryField.
+ * It sorts the fields based on the order specified in the BinaryField annotation.
+ */
 public class GenericMessageReader extends GenericMessage{
+
+    private final TypeCodecRegistry codecRegistry;
+
+    public GenericMessageReader(TypeCodecRegistry codecRegistry) {
+        this.codecRegistry = codecRegistry;
+    }
+
     public <T> T read(DataInputStream input, Class<T> clazz) {
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
@@ -19,33 +33,15 @@ public class GenericMessageReader extends GenericMessage{
                 Method method = clazz.getMethod(setterName, field.getType());
                 Class<?> type = method.getParameterTypes()[0];
 
-                if (type == String.class) {
-                    int length = input.readInt();
-                    byte[] bytes = new byte[length];
-                    input.readFully(bytes);
-                    method.invoke(instance, new String(bytes, StandardCharsets.UTF_8));
-                }
-                else if (type == Integer.class) {
-                    int value = input.readInt();
-                    method.invoke(instance, value);
-                }
-                else if (type == Long.class) {
-                    long value = input.readLong();
-                    method.invoke(instance, value);
-                }
-                else if (type == Double.class) {
-                    double value = input.readDouble();
-                    method.invoke(instance, value);
-                }
-                else if (type == Boolean.class) {
-                    boolean value = input.readBoolean();
+                TypeCodec<Object> codec = (TypeCodec<Object>) codecRegistry.get(type);
+                if (codec != null) {
+                    Object value = codec.read(input);
                     method.invoke(instance, value);
                 }
                 else {
                     Object nastedObject = read (input, type);
                     method.invoke(instance, nastedObject);
                 }
-
             }
             return instance;
         } catch (Exception e) {
